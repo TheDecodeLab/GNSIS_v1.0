@@ -1,6 +1,6 @@
 ##:::::::::::::::::::::::::::::
 ## Built-in Feature Importance
-##::::::::::::::::::::::::::::
+##:::::::::::::::::::::::::::::
 # Using RandomForest
 trainSet.imp$RECUR_STROKE<-as.factor(as.matrix(trainSet.imp %>% 
                                          rename(label="RECUR_STROKE") %>%
@@ -31,3 +31,22 @@ builtInLassoCaret<-train(x,y,
                                                 lambda = seq(0.0001,0.1,by = 0.001)))
 builtInLassoCaret$bestTune
 coef(builtInLassoCaret$finalModel, builtInLassoCaret$bestTune$lambda)
+##::::::::::::::::
+## Filter Methods
+##::::::::::::::::
+# Study Correlation
+colnames(trainSet.imp[apply(trainSet.imp,2,function(x){all(x %in% 0:1)})==FALSE])
+corr<-cor(trainSet.imp %>%
+            select("AGE_AT_INDEX",
+                   "BP_SYSTOLIC",
+                   "BP_DIASTOLIC",
+                   "PLT_CLOSEST_TO_INDEX",
+                   "WBC_CLOSEST_TO_INDEX",
+                   "BMI_CLOSEST_TO_INDEX",
+                   "HDL_CLOSEST_TO_INDEX",
+                   "LDL_CLOSEST_TO_INDEX",
+                   "HBA1C_CLOSEST_TO_INDEX",
+                   "HB_CLOSEST_TO_INDEX",
+                   "DAYS_BTW_LASTOP_INDEX",
+                   "CREATININE_CLOSEST_TO_INDEX"),
+          method = "pearson")
