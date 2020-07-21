@@ -15,3 +15,19 @@ builtInRF<-train(RECUR_STROKE~.,
                  trControl = trainControl(classProbs = T,
                                           summaryFunction = twoClassSummary))
 varImp(builtInRF)
+# Using LASSO method 
+x<-trainSet.imp %>% 
+    select(-c("PT_ID","RECUR_STROKE","PT_SEX","SMOKE_STTS"))
+y<-trainSet.imp["RECUR_STROKE"]
+builtInLassoCaret<-train(x,y,
+                         preProcess ="scale",
+                         metric="ROC",
+                         method="glmnet",
+                         trControl = trainControl(method="cv", 
+                                                  number=10,
+                                                  classProbs = T,
+                                                  summaryFunction = twoClassSummary),
+                         tuneGrid = expand.grid(alpha = 1,
+                                                lambda = seq(0.0001,0.1,by = 0.001)))
+builtInLassoCaret$bestTune
+coef(builtInLassoCaret$finalModel, builtInLassoCaret$bestTune$lambda)
