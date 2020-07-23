@@ -31,9 +31,9 @@ builtInLassoCaret<-train(x,y,
                                                 lambda = seq(0.0001,0.1,by = 0.001)))
 builtInLassoCaret$bestTune
 coef(builtInLassoCaret$finalModel, builtInLassoCaret$bestTune$lambda)
-##::::::::::::::::
+##:::::::::::::::
 ## Filter Methods
-##::::::::::::::::
+##:::::::::::::::
 # Study Correlation
 colnames(trainSet.imp[apply(trainSet.imp,2,function(x){all(x %in% 0:1)})==FALSE])
 corr<-cor(trainSet.imp %>%
