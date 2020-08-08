@@ -1,0 +1,172 @@
+
+#Randon forest
+
+```{r Grid search RF}
+library(caret)
+library(corrplot)	
+library(foreach) 
+library(doParallel)	
+library(dplyr)       
+library(pROC)				
+
+set.seed(123)
+
+testnew5_RF <- dtatest
+testX5_RF <- testnew5_RF[,-1]
+levels(testnew5_RF$Class) <- c("No", "Yes")
+
+dmy5.test.RF <- dummyVars(" ~ .", data = testX5_RF,fullRank = T)
+test_transformed_RF <- data.frame(predict(dmy5.test.RF, newdata = testX5_RF))
+
+rf.probs.5.rf2 <- predict(rf_grid_RF, test_transformed_RF, type="prob")
+rf.ROC.5.rf2 <- roc(predictor=rf.probs.5.rf2$Yes,
+               response=testnew5_RF$Class,
+               levels=rev(levels(testnew5_RF$Class)))
+rf.ROC.5.rf2$auc 
+
+pred_rf_5_rf2 <- predict(rf_grid_RF, newdata=test_transformed_RF)
+confusionMatrix(pred_rf_5_rf2,testnew5_RF$Class, mode = "prec_recall",positive = "Yes")   
+confusionMatrix(pred_rf_5_rf2,testnew5_RF$Class, mode = "sens_spec",positive = "Yes") 
+
+ci.auc(testnew5_RF$Class, predict(rf_grid_RF, type="prob",newdata = test_transformed_RF)[,2])
+
+plot(rf.ROC.5.rf2,main="RF ROC")
+
+
+varImp(object=rf_grid_RF)
+plot(varImp(object=rf_grid_RF),main="RF - Variable Importance", top=10)
+```
+
+#GBM
+```{r Hyperparameter tuning GBM}
+library(caret)
+library(corrplot)	
+library(foreach) 
+library(doParallel)	
+library(dplyr)        
+library(gbm)				 
+library(pROC)				  
+library(xgboost)      
+
+gbm.probs.RF <- predict(gbm.tune.RF,test_transformed_RF,type="prob")
+gbm.ROC.RF <- roc(predictor=gbm.probs.RF$Yes,
+               response=testnew5_RF$Class,
+               levels=rev(levels(testnew5_RF$Class)))
+gbm.ROC.RF$auc 
+
+gbm.pred.RF <- predict(gbm.tune.RF, newdata=test_transformed_RF)
+confusionMatrix(gbm.pred.RF,testnew5_RF$Class, mode = "prec_recall", positive = "Yes")   
+confusionMatrix(gbm.pred.RF,testnew5_RF$Class, mode = "sens_spec", positive = "Yes") 
+
+ci.auc(testnew5_RF$Class, predict(gbm.tune.RF, type="prob",newdata = test_transformed_RF)[,2])
+
+plot(gbm.ROC.RF,main="GBM ROC")
+
+
+varImp(object=gbm.tune.RF)
+plot(varImp(object=gbm.tune.RF),main="GBM - Variable Importance", top=10)
+
+```
+
+#XGboost
+```{r xgboost}
+library(caret)
+library(tictoc)
+library(ROSE)
+library(dplyr)  
+library(pROC)	
+
+xgb.probs.RF <- predict(xgb.tune.RF,test_transformed_RF,type="prob")
+xgb.ROC.RF <- roc(predictor=xgb.probs.RF$Yes,
+               response=testnew5_RF$Class,
+               levels=rev(levels(testnew5_RF$Class)))
+xgb.ROC.RF$auc
+
+xgb.pred.RF <- predict(xgb.tune.RF,test_transformed_RF)
+confusionMatrix(xgb.pred.RF,testnew5_RF$Class, mode= "prec_recall", positive = "Yes")   
+confusionMatrix(xgb.pred.RF,testnew5_RF$Class, mode= "sens_spec", positive = "Yes")
+
+ci.auc(testnew5_RF$Class, predict(xgb.tune.RF, type="prob",newdata = test_transformed_RF)[,2])
+
+plot(xgb.ROC.RF,main="xgboost ROC")
+
+varImp(object=xgb.tune.RF)
+plot(varImp(object=xgb.tune.RF),main="XGBoost - Variable Importance", top=15)
+```
+
+
+#SVM
+```{r grid search for SVM}
+
+library(caret)
+library(dplyr)        
+library(kernlab)     
+library(pROC)	     
+library(kernlab)
+
+svm.probs.RF <- predict(svm.tune.RF,test_transformed_RF,type="prob")
+svm.ROC.RF <- roc(predictor=svm.probs.RF$Yes,
+               response=testnew5_RF$Class,
+               levels=rev(levels(testnew5_RF$Class)))
+svm.ROC.RF$auc 
+
+svm.pred.RF <- predict(svm.tune.RF,test_transformed_RF,  train = TRUE)
+confusionMatrix(svm.pred.RF,testnew5_RF$Class, mode= "prec_recall", positive = "Yes")   
+confusionMatrix(svm.pred.RF,testnew5_RF$Class, mode= "sens_spec", positive = "Yes")  
+
+ci.auc(testnew5_RF$Class, predict(svm.tune.RF, type="prob",newdata = test_transformed_RF)[,2])
+
+plot(svm.ROC.RF,main="SVM ROC")
+
+varImp(object=svm.tune.RF)
+plot(varImp(object=svm.tune.RF),main="SVM - Variable Importance", top=10)
+```
+
+
+## General Logistic Models
+```{r GLM}
+library(caret)
+library(tictoc)
+
+glm.probs.5.RF2 <- predict(model_glm_RF, test_transformed_RF, type="prob")
+head(glm.probs.5.RF2)
+
+glm.ROC.5.RF2 <- roc(predictor=glm.probs.5.RF2$Yes,
+               response=testnew5_RF$Class,
+               levels=rev(levels(testnew5_RF$Class)))
+glm.ROC.5.RF2$auc
+
+pred_glm_5_RF2 <- predict(model_glm_RF, newdata=test_transformed_RF)
+confusionMatrix(pred_glm_5_RF2,testnew5_RF$Class, mode = "prec_recall",positive = "Yes")   
+confusionMatrix(pred_glm_5_RF2,testnew5_RF$Class, mode = "sens_spec",positive = "Yes") 
+
+ci.auc(testnew5_RF$Class, predict(model_glm_RF, type="prob",newdata = test_transformed_RF)[,2])
+
+plot(glm.ROC.5.RF2,main="GLM ROC")
+
+varImp(object=model_glm_RF)
+plot(varImp(object=model_glm_RF),main="GLM - Variable Importance", top=10)   
+```
+
+## All ROCs
+```{r ROC all in one}
+
+library(gplots)
+library(ROCR)
+library(pROC)
+
+
+plot(gbm.ROC.RF, col = 1, lty = 1, main = "ROC")
+plot(xgb.ROC.RF, col = 2, lty = 1, add = TRUE)
+plot(svm.ROC.RF, col = 8, lty = 1, add = TRUE)
+plot(rf.ROC.5.rf2, col = 3, lty = 1, add = TRUE)
+plot(glm.ROC.5.RF2, col = 4, lty = 1, add = TRUE)
+  
+legend("topleft",
+       legend=c("GBM","XGBoost","SVM", "RF", "GLM"), 
+       col=c("black","red", "grey", "green","blue"),
+       lty=c(1,1,1,1,1),
+       ncol=1)
+
+```
+

@@ -1,0 +1,30 @@
+
+## Feature Selection
+
+```{r feature selection, fig.width=8, fig.height=5}
+library(Boruta)
+library(ranger)
+
+set.seed(111)
+boruta_train <- Boruta(Class~., data = Trainset5, doTrace = 2)
+print(boruta_train)
+
+plot(boruta_train, las=2,  cex.axis=0.5, font=2, xlab="")
+mtext(text="Attributes", side=1, line=4.5)
+
+top15 <- getSelectedAttributes(boruta_train, withTentative = F)
+
+boruta.df <- attStats(boruta_train)
+class(boruta.df)
+print(boruta.df)
+```
+
+##Select top 15 features in both train and test set
+```{r new train and test sets}
+library(dplyr)
+dtatrain <- Trainset5 %>%
+  select(one_of(c("Class", top15)))
+
+dtatest <- Testset5 %>%
+  select(one_of(c("Class", top15)))
+```
