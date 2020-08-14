@@ -1,0 +1,220 @@
+
+#Randon forest
+
+```{r Grid search RF}
+library(caret)
+library(corrplot)	
+library(foreach) 
+library(doParallel)	
+library(dplyr)       
+library(pROC)				
+
+set.seed(123)
+
+trainnew5_RF <- dtatrain
+trainX5_RF <- trainnew5_RF[,-1]
+levels(trainnew5_RF$Class) <- c("No", "Yes")
+
+dmy5_RF <- dummyVars(" ~ .", data = trainX5_RF,fullRank = T)
+train_transformed_RF <- data.frame(predict(dmy5_RF, newdata = trainX5_RF))
+
+tic <- proc.time()[3]
+control_rf <- trainControl(method = "repeatedcv",
+                          number = 10,
+                          repeats = 10,
+                          summaryFunction = twoClassSummary,
+                          classProbs = T,
+                          allowParallel = T,
+                          search = "random")
+
+rf_grid_RF <- train(x=train_transformed_RF,y=trainnew5_RF$Class,
+                       method = 'rf',
+                       preProcess = "scale",
+                     metric = "ROC",
+                     trControl = control_rf,
+                     tuneLength = 5)
+
+toc <- proc.time()[3]
+toc - tic 
+
+pred_rf_5_Train_rf2 <- predict(rf_grid_RF, newdata=train_transformed_RF)
+confusionMatrix(pred_rf_5_Train_rf2,trainnew5_RF$Class, mode = "prec_recall", positive = "Yes")
+confusionMatrix(pred_rf_5_Train_rf2,trainnew5_RF$Class, mode = "sens_spec", positive = "Yes")
+
+
+rf.probs.T.5.rf2 <- predict(rf_grid_RF,type="prob")
+rf.ROC.T.5.rf2 <- roc(predictor=rf.probs.T.5.rf2$Yes,
+               response=trainnew5_RF$Class,
+               levels=rev(levels(trainnew5_RF$Class)))
+rf.ROC.T.5.rf2$auc 
+
+```
+
+#GBM
+```{r Hyperparameter tuning GBM}
+library(caret)
+library(corrplot)	
+library(foreach) 
+library(doParallel)	
+library(dplyr)        
+library(gbm)				 
+library(pROC)				  
+library(xgboost)      
+
+set.seed(123)
+
+tic <- proc.time()[3]
+ctrl <- trainControl(method = "repeatedcv",
+                          number = 10,
+                          repeats = 10,
+                          sampling = "rose",
+                          summaryFunction = twoClassSummary,
+                          classProbs = T,
+                          allowParallel = T,
+                          search = "random")
+ 
+registerDoParallel(4)	
+getDoParWorkers()
+
+gbm.tune.RF <- train(x=train_transformed_RF,y=trainnew5_RF$Class,
+                              method = "gbm",
+                               preProcess = "scale",
+                               metric = "ROC",
+                               trControl = control,
+                               tuneLength = 5,
+                               verbose=FALSE)
+toc <- proc.time()[3]
+toc - tic 
+
+gbm.pred_Train_RF <- predict(gbm.tune.RF, newdata=train_transformed_RF)
+confusionMatrix(gbm.pred_Train_RF,trainnew5_RF$Class, mode = "prec_recall", positive = "Yes") 
+confusionMatrix(gbm.pred_Train_RF,trainnew5_RF$Class, mode = "sens_spec",positive = "Yes" )
+
+gbm.probs.RF <- predict(gbm.tune.RF,type="prob")
+gbm.ROC.T.RF <- roc(predictor=gbm.probs.RF$Yes,
+               response=trainnew5_RF$Class,
+               levels=rev(levels(trainnew5_RF$Class)))
+gbm.ROC.T.RF$auc
+```
+
+#XGboost
+```{r xgboost}
+library(caret)
+library(tictoc)
+library(ROSE)
+library(dplyr)  
+library(pROC)	
+
+tic <- proc.time()[3]
+ctrl <- trainControl(method = "repeatedcv",
+                          number = 10,
+                          repeats = 10,
+                          sampling = "rose",
+                          summaryFunction = twoClassSummary,
+                          classProbs = T,
+                          allowParallel = T,
+                          search = "random")
+registerDoParallel(4,cores=4)
+getDoParWorkers()
+
+xgb.tune.RF <-train(x=train_transformed_RF,
+                 y=trainnew5_RF$Class,
+                 method="xgbTree",
+                  preProcess = "scale",
+                  metric = "ROC",
+                  trControl = ctrl,
+                  tuneLength = 5,
+                 verbose=FALSE)
+toc <- proc.time()[3]
+toc-tic 
+
+
+xgb.pred_Train_RF <- predict(xgb.tune.RF,train_transformed_RF)
+confusionMatrix(xgb.pred_Train_RF,trainnew5_RF$Class, mode= "prec_recall", positive = "Yes")  
+confusionMatrix(xgb.pred_Train_RF,trainnew5_RF$Class, mode = "sens_spec", positive = "Yes")  
+
+xgb.probs.T.RF <- predict(xgb.tune.RF,type="prob")
+xgb.ROC.T.RF <- roc(predictor=xgb.probs.T.RF$Yes,
+               response=trainnew5_RF$Class,
+               levels=rev(levels(trainnew5_RF$Class)))
+xgb.ROC.T.RF$auc
+```
+
+
+#SVM
+```{r grid search for SVM}
+
+library(caret)
+library(dplyr)        
+library(kernlab)     
+library(pROC)	     
+library(kernlab)
+
+set.seed(123)
+tic <- proc.time()[3]
+ctrl_svm <- trainControl(method = "repeatedcv",
+                          number = 10,
+                          repeats = 10,
+                          sampling = "rose",
+                          summaryFunction = twoClassSummary,
+                          classProbs = T,
+                          allowParallel = T,
+                          search = "random")
+
+svm.tune.RF <- train(x=train_transformed_RF,y=trainnew5_RF$Class,
+                     method = "svmRadial",
+                     preProcess = "scale",
+                              metric = "ROC",
+                              trControl = ctrl,
+                              tuneLength = 5,
+                              verbose=FALSE)
+toc <- proc.time()[3]
+toc - tic
+
+svm.pred_Train_RF <- predict(svm.tune.RF,train_transformed_RF,  train = TRUE)
+confusionMatrix(svm.pred_Train_RF,trainnew5_RF$Class, mode= "prec_recall", positive = "Yes")
+confusionMatrix(svm.pred_Train_RF,trainnew5_RF$Class,  mode = "sens_spec", positive = "Yes") 
+
+svm.probs.T.RF <- predict(svm.tune.RF,type="prob")
+svm.ROC.T.RF <- roc(predictor=svm.probs.T.RF$Yes,
+               response=trainnew5_RF$Class,
+               levels=rev(levels(trainnew5_RF$Class)))
+svm.ROC.T.RF$auc 
+```
+
+
+## General Logistic Models
+```{r GLM}
+library(caret)
+library(tictoc)
+
+tic <- proc.time()[3]
+control <- trainControl(method = "repeatedcv",
+                          number = 10,
+                          repeats = 10,
+                          sampling = "rose",
+                          summaryFunction = twoClassSummary,
+                          classProbs = T,
+                          allowParallel = T,
+                          search = "random")
+
+model_glm_RF <- train(x=train_transformed_RF,y=trainnew5_RF$Class,
+                      method = "glm", 
+                         family = "binomial",  
+                         preProcess = "scale",
+                              metric = "ROC",
+                              trControl = control,
+                              tuneLength = 5)
+toc <- proc.time()[3]
+toc - tic 
+
+pred_glm_5_Train_RF2 <- predict(model_glm_RF, newdata=train_transformed_RF)
+confusionMatrix(pred_glm_5_Train_RF2,trainnew5_RF$Class, mode = "prec_recall", positive = "Yes")
+confusionMatrix(pred_glm_5_Train_RF2,trainnew5_RF$Class, mode = "sens_spec", positive = "Yes")
+
+glm.probs.T.5.RF2 <- predict(model_glm_RF,type="prob")
+glm.ROC.T.5.RF2 <- roc(predictor=glm.probs.T.5.RF2$Yes,
+               response=trainnew5_RF$Class,
+               levels=rev(levels(trainnew5_RF$Class)))
+glm.ROC.T.5.RF2$auc
+```

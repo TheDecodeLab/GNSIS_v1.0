@@ -1,0 +1,30 @@
+
+## Randomization to train and tests
+
+```{r separate data into train and test}
+set.seed(123)
+smp_size <- floor(0.80 * nrow(data))
+
+train_ind <- sample(seq_len(nrow(data)), size = smp_size)
+
+read_train <- data[train_ind, ]
+read_test <- data[-train_ind, ]
+
+trainIndex <- createDataPartition(data$Class, p = .8, list = FALSE, times = 1)
+read_train <- data[ trainIndex,]
+read_test  <- data[-trainIndex,]
+```
+
+
+## Imputation 
+```{r data imputation}
+
+library(mice)
+
+temptrain5 <- mice(read_train, maxit = 5, m = 5, seed = NA)
+Trainset5 <- complete(temptrain5, 1)
+
+temptest5 <- mice(read_test, maxit = 5, m = 5, seed = NA)
+Testset5 <- complete(temptest5, 1)
+```
+
