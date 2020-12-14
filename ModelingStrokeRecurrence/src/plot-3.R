@@ -1,4 +1,119 @@
 tiff("Figure3.tiff", units="in", width=8, height=8, res=300)
+axiscolor<-c(rep("firebrick",14),
+             rep("plum3",18),
+             rep("orange3",7), #7 for features non abbr
+             rep("slategray4",12),
+             rep("aquamarine3",2)
+)
+g1<-meltedFeaturesCompiled%>%
+  mutate_all(~replace(., is.na(.), 0))%>%
+  #filter(Sampling=='As-Is') %>%
+  ggplot(aes(y=FeaturesAbbr,x=`Trained Classifiers`,color=varCategory))+
+  geom_tile(aes(fill = `Normalized Score`),colour = "white") + 
+  geom_point(aes(color=factor(FeatureSelMethod)),size = 2,shape=18,alpha=10,
+              position = position_jitter(h=0,w=.2))+
+  scale_color_manual(#labels=c("Combination","Data Driven","Expert\nSelection","Full Set"),
+                     labels=c("Set 4","Set 3","Set 2","Set 1"),
+                     values = c("green","wheat3", "royalblue3", "deeppink3"))+
+  ggtitle("")+
+  labs(colour="Feature Selection\nApproach")+
+  facet_grid(~Window,scales="free")+
+  scale_fill_gradient(name="Normalized Feature\nImportance Score",low = "white",high = "steelblue")+
+  theme_classic()+
+  theme(plot.title = element_text(color="black", size=16, face="bold",hjust = .5,
+                                  margin=margin(0,0,28,0)), #t, r, b, l
+        axis.text.x = element_text(face="bold",color="black",margin = margin(b = 10),
+                                   angle =90,hjust=1,vjust = .5,size=9),
+        axis.text.y = element_text(face="bold",size=9,color=axiscolor),
+        axis.title = element_blank(),
+        #axis.line.y.left = element_blank(),
+        strip.text = element_text(size=12,face="bold",color="black"),
+        legend.title = element_text(face="bold",color="black"),
+        legend.position = "top",
+        legend.text = element_text(color="black",size=9,face="bold")
+  )+
+  guides(colour=guide_legend(ncol=2,nrow=2,override.aes = list(size = 4),byrow=TRUE))+
+  #guides(shape=guide_legend(ncol=2,nrow=2,override.aes = list(size = 3),byrow=TRUE))+
+  #guides(color=guide_legend(ncol=3,nrow=2,override.aes = list(size = 3),byrow=TRUE))+
+  coord_cartesian(clip="off")
+g1<-g1+
+  #theme(#strip.background = element_blank(),
+  #      panel.spacing.x=unit(1, "lines"))+
+  geom_text(data=annonate.df(g1,"(",LETTERS,")"),
+            mapping = aes(x = -Inf, y = -Inf, label = fig.labels, fontface = 2),
+            family="Helvetica",color="black",size=4,
+            hjust=-1.5,vjust=12
+  ) 
+library(cowplot)
+# Composite score for Feature importance variables
+featuresImp.avgScore<-featuresCompiled%>%
+  filter(Sampling=="As-Is")%>%
+  filter(Features!="PAST_HEMORRHAGIC_STROKE_AT_INDEX" & Features!="PAST_ISCHEMIC_STROKE_AT_INDEX")%>%
+  select(-c("Window","Sampling","FeatureSelMethod","Features","varCategory"))%>%
+  group_by(FeaturesAbbr)%>%
+  summarize_all(list(mean),na.rm=T)%>% # compute mean for each variable by classifier
+  mutate(Overall.Average=rowMeans(.[,2:7],na.rm = T)) # compute total mean of each variable
+featuresImp.sdScore<-featuresCompiled%>%
+  select(-c("Window","Sampling","FeatureSelMethod","Features","varCategory"))%>%
+  group_by(FeaturesAbbr)%>%
+  summarize_all(list(sd),na.rm=T) # compute mean for each variable by classifier
+featuresImp.sdScore$row_std <- apply(featuresImp.sdScore[,-1], 1, sd,na.rm=T)
+write.xlsx(featuresImp.avgScore,"feaImpavg.xlsx",row.names=F,quote=FALSE)
+featuresImp.avgScore$FeaturesAbbr<-factor(featuresImp.avgScore$FeaturesAbbr,levels = c(
+  "Age",
+  "Body mass index",
+  "Creatinine",
+  "Current smoker",
+  "Diastolic blood pressure",
+  "High-density lipoprotein",
+  "Hemoglobin A1C",
+  "Hemoglobin",
+  "Last outpatient visit",
+  "Low-density lipoprotein",
+  "Male",
+  "Platelet",
+  "Systolic blood pressure",
+  "White blood cell",
+  "Atrial fibrillation or flutter",
+  "Atrial fibrillation",
+  "Atrial flutter",
+  "Chronic liver disease (mild)",
+  "Chronic liver disease (mod/severe)",
+  "Diabetes",
+  "Dyslipidemia",
+  "Heart failure",
+  "Hypercoagulable",
+  "Hypertension",
+  "Kidney diseases",
+  "Liver diseases",
+  "Lung diseases",
+  "Myocardial infarction",
+  "Neoplasm",
+  "Patent foramen ovale",
+  "Peripheral vascular disease",
+  "Rheumatic diseases",
+  "Anti-hypertensives",
+  "Aspirin",
+  "Clopidogrel",
+  "Coumadin/Warfarin",
+  "Dipyridamole",
+  "Oral anticoagulants",
+  "Statins",
+  "ACE inhibitors",
+  "Angiotensin receptor blockers",
+  "Apixaban/Rivaroxaban",
+  "Aspirin discharge",
+  "Beta blockers",
+  "Calcium channel blockers",
+  "Clopidogrel discharge",
+  "Coumadin/Warfarin discharge",
+  "Dabigatran",
+  "Dipyridamole discharge",
+  "Diuretics",
+  "Statins discharge",
+  "Heart disorder",
+  "Stroke"
+  ))
 p3<-ggplot(melt(featuresImp.avgScore[c('FeaturesAbbr','Overall.Average')]),
            aes(y=FeaturesAbbr,x=value))+                             # order as per main feaImp plot
   geom_bar(stat = "identity",position = 'dodge',fill=axiscolor,alpha=.8)+
