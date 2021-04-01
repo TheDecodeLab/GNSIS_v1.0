@@ -1,5 +1,5 @@
 # Goal
-Although some risk factors for stroke readmission have been reported, the mortality risk is unclear. We sought to evaluate etiologies and predictors of 30-day readmissions and determine the associated mortality risk.<br>
-This was a retrospective case–control study to identify risk factors predicting 30-day readmission after stroke. A descriptive sub-study of the subset of patients who were readmitted was also conducted as was a mortality analysis of index and readmissions. This study was carried out in accordance with the Hartford Hospital Institutional Revenue Board after the protocol was reviewed and approved.
+Hospital readmissions impose a substantial burden on the healthcare system. Reducing readmissions after stroke could lead to improved quality of care especially since stroke is associated with a high rate of readmission.<br>
+The goal of this study is to enhance our understanding of the predictors of 30-day readmission after ischemic stroke and develop models to identify high-risk individuals for targeted interventions.
 # Publication
-[High Mortality among 30-Day Readmission after Stroke: Predictors and Etiologies of Readmission](https://www.frontiersin.org/articles/10.3389/fneur.2021.638267/full)
+[Machine Learning-Enabled 30-Day Readmission Model for Stroke Patients](https://www.frontiersin.org/articles/10.3389/fneur.2021.638267/full)
