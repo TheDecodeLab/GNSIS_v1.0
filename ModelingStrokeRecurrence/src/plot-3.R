@@ -5,6 +5,11 @@ axiscolor<-c(rep("firebrick",14),
              rep("slategray4",12),
              rep("aquamarine3",2)
 )
+annonate.df<-function(fig,open,tags,close){
+  fig.layout<-ggplot_build(fig)$layout$layout
+  fig.labels<-paste0(open,tags[fig.layout$PANEL],close)
+  return(cbind(fig.layout,fig.labels))
+}
 g1<-meltedFeaturesCompiled%>%
   mutate_all(~replace(., is.na(.), 0))%>%
   #filter(Sampling=='As-Is') %>%
